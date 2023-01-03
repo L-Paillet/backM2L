@@ -17,6 +17,9 @@ app.get('/utilisateur', async(req, res)=>{
     let conn = await pool.getConnection()
     let resultat = await conn.query('SELECT * FROM utilisateur')
     res.status(200).json(resultat)
+    conn.release()
+
+
 })
 
 app.post('/utilisateur', async(req, res)=>{
@@ -25,12 +28,17 @@ app.post('/utilisateur', async(req, res)=>{
     console.log("créer la requete")
     await conn.query('INSERT INTO utilisateur(nom, mail, adresse, mdp) VALUES (?,?,?,?)',[req.body.nom,req.body.mail,req.body.adresse, req.body.mdp])
     res.status(200).json({message: "Utilisateur créer"})
+    conn.release()
+
 })
 
 app.get('/produits', async(req, res)=>{
+    console.log("test envoie")
     let conn = await pool.getConnection()
     let resultat = await conn.query('SELECT * FROM produits')
     res.status(200).json(resultat)
+    conn.release()
+
 })
 
 
