@@ -22,6 +22,7 @@ app.get('/utilisateur', async(req, res)=>{
 
 })
 
+//création d'utilisateur
 app.post('/utilisateur', async(req, res)=>{
     console.log("connexion bdd");
     let conn = await pool.getConnection()
@@ -32,6 +33,33 @@ app.post('/utilisateur', async(req, res)=>{
 
 })
 
+// connexion
+app.post('/login', async(req, res) =>{
+    console.log("fffdfdfdfdf")
+
+    let login = await pool.getConnection()
+// Récupération des informations de connexion de l'utilisateur dans la requête
+  const username = req.body.username;
+  const password = req.body.password;
+  console.log(username+" "+password)
+    // Vérification des informations de connexion de l'utilisateur dans la base de données SQL
+    // const user = conn.findOne({ username, password });
+    let resultat = await login.query('SELECT mdp FROM utilisateur')
+    console.log(password)
+    
+    if (!user) {
+      return res.status(401).send({ error: "Mauvais login" });
+    }
+  
+    // Si les informations sont correctes, génération d'un jeton de connexion
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+  
+    // Envoi du jeton de connexion en réponse
+    res.send({ token });
+    res.status(200).json(resultat)
+})
+
+//liste les produits
 app.get('/produits', async(req, res)=>{
     console.log("test envoie")
     let conn = await pool.getConnection()
