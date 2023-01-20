@@ -35,28 +35,25 @@ app.post('/utilisateur', async(req, res)=>{
 
 // connexion
 app.post('/login', async(req, res) =>{
-    console.log("fffdfdfdfdf")
 
     let login = await pool.getConnection()
 // Récupération des informations de connexion de l'utilisateur dans la requête
-  const username = req.body.username;
-  const password = req.body.password;
-  console.log(username+" "+password)
-    // Vérification des informations de connexion de l'utilisateur dans la base de données SQL
-    // const user = conn.findOne({ username, password });
-    let resultat = await login.query('SELECT mdp FROM utilisateur')
-    console.log(password)
-    
-    if (!user) {
-      return res.status(401).send({ error: "Mauvais login" });
-    }
+    const username = req.body.username;
+    const password = req.body.password;
+    const jwt = require('jsonwebtoken');
+        // Vérification des informations de connexion de l'utilisateur dans la base de données SQL
+        let resultat = await login.query(`SELECT * FROM utilisateur WHERE nom = '${username}' AND mdp = '${password}'`);
+        if (!resultat) {
+        return res.status(401).send({ error: "Mauvais login" });
+        }
   
     // Si les informations sont correctes, génération d'un jeton de connexion
-    const token = jwt.sign({ userId: user.id }, process.env.JWT_SECRET);
+    
+    const token = jwt.sign({ userId: resultat[0].id }, process.env.JWT_SECRET);
   
     // Envoi du jeton de connexion en réponse
-    res.send({ token });
-    res.status(200).json(resultat)
+    conn.release()
+    res.status(200).send({ token })
 })
 
 //liste les produits
