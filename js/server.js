@@ -32,12 +32,21 @@ app.post('/utilisateur', async(req, res)=>{
     conn.release();
 
 })
+// Ajout produit
+app.post('/produits', async (req, res) =>{
+	const conn = await pool.getConnection()
+
+	await conn.query('Insert INTO produits(photo, description, nom, prix) VALUES (?,?,?,?)', [req.body.photo, req.body.description, req.body.nom, req.body.prix])
+
+	res.status(200).json({message: "Produit ajouté"})
+	conn.release();
+})
 
 // connexion
 app.post('/login', async(req, res) =>{
 
     const login = await pool.getConnection()
-// Récupération des informations de connexion de l'utilisateur dans la requête
+    // Récupération des informations de connexion de l'utilisateur dans la requête
     const username = req.body.username;
     const password = req.body.password;
     const jwt = require('jsonwebtoken');
@@ -46,12 +55,13 @@ app.post('/login', async(req, res) =>{
         if (!resultat) {
         return res.status(401).send({ error: "Mauvais login" });
         }
-        console.log(resultat);
+        //console.log(resultat);
   
     // Si les informations sont correctes, génération d'un jeton de connexion
     const token = jwt.sign({ userId: resultat[0].id }, process.env.JWT_SECRET);
     // Envoi du jeton de connexion en réponse
     login.release();
+    console.log(token);
     res.status(200).send({ token })
 })
 
@@ -66,7 +76,7 @@ app.get('/produits', async(req, res)=>{
 })
 
 
-// server.listen(3000)
-app.listen(8000, () => { // ouverture du serveur sur le port 3000
+// server.listen(8000)
+app.listen(8000, () => { // ouverture du serveur sur le port 8000
     console.log("Serveur à l'écoute") // afficher un message dans la console.
 })
