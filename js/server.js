@@ -1,7 +1,9 @@
 const express = require('express');// la récupération d'express
 const mariadb = require('mariadb');
-var cors = require('cors')
-require('dotenv').config()
+var cors = require('cors');
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
+require('dotenv').config();
 
 const pool = mariadb.createPool({
     host: process.env.DB_HOST, 
@@ -43,35 +45,64 @@ app.post('/produits', async (req, res) =>{
 })
 
 // connexion
-app.post('/login', async(req, res) =>{
+// app.post('/login', async(req, res) =>{
 
-    const login = await pool.getConnection()
-    // Récupération des informations de connexion de l'utilisateur dans la requête
-    const username = req.body.username;
-    const password = req.body.password;
-    const jwt = require('jsonwebtoken');
-        // Vérification des informations de connexion de l'utilisateur dans la base de données SQL
-        const resultat = await
-         login.query(`SELECT * FROM utilisateur WHERE nom = '${username}' AND mdp = '${password}'`);
-        console.log(!resultat[0]);
-        if (!resultat[0]) {
-        login.release();
+//     const login = await pool.getConnection()
+//     // Récupération des informations de connexion de l'utilisateur dans la requête
+//     const username = req.body.username;
+//     const password = req.body.password;
+//     const jwt = require('jsonwebtoken');
+//         // Vérification des informations de connexion de l'utilisateur dans la base de données SQL
+//         const resultat = await
+//          login.query(`SELECT * FROM utilisateur WHERE nom = '${username}' AND mdp = '${password}'`);
+//         console.log(!resultat[0]);
+//         if (!resultat[0]) {
+//         login.release();
 
-        return res.status(401).send({ error: "Mauvais login" });
-        }
-        else{
+//         return res.status(401).send({ error: "Mauvais login" });
+//         }
+//         else{
 
-        //console.log(resultat);
+//         //console.log(resultat);
   
-    // Si les informations sont correctes, génération d'un jeton de connexion
-    const token = jwt.sign({ userId: resultat[0].id }, process.env.JWT_SECRET);
-    // Envoi du jeton de connexion en réponse
-    login.release();
-    console.log(token);
-    res.status(200).send({ token })
-}
+//     // Si les informations sont correctes, génération d'un jeton de connexion
+//     const token = jwt.sign({ userId: resultat[0].id }, process.env.JWT_SECRET);
+//     // Envoi du jeton de connexion en réponse
+//     login.release();
+//     console.log(token);
+//     res.status(200).send({ token })
+// }
 
-})
+// })
+
+app.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ message: 'Veuillez saisir une adresse e-mail et un mot de passe.' });
+    }
+    try {
+      const conn = await pool.getConnection();
+      const rows = await conn.query('SELECT * FROM utilisateur WHERE nom = ?', [username]);
+      conn.release();
+      if (rows.length > 0) {
+        const user = rows[0];
+        console.log(password,  user.password)
+        console.log(await bcrypt.compare(password, user.password));
+        const match = await bcrypt.compare(password, user.password);
+        if (match) {
+          const token = jwt.sign({ sub: user.id }, 'secret_key');
+          return res.json({ message: 'Connexion réussie !',  token });
+        } else {
+          return res.status(401).json({ message: 'Adresse e-mail ou mot de passe incorrect.' });
+        }
+      } else {
+        return res.status(401).json({ message: 'Adresse e-mail ou mot de passe incorrect.' });
+      }
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: 'Erreur lors de l\'inscription.' });
+    }
+  })
 
 //liste les produits
 app.get('/produits', async(req, res)=>{
