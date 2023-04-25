@@ -51,10 +51,16 @@ app.post('/login', async(req, res) =>{
     const password = req.body.password;
     const jwt = require('jsonwebtoken');
         // Vérification des informations de connexion de l'utilisateur dans la base de données SQL
-        const resultat = await login.query(`SELECT * FROM utilisateur WHERE nom = '${username}' AND mdp = '${password}'`);
-        if (!resultat) {
+        const resultat = await
+         login.query(`SELECT * FROM utilisateur WHERE nom = '${username}' AND mdp = '${password}'`);
+        console.log(!resultat[0]);
+        if (!resultat[0]) {
+        login.release();
+
         return res.status(401).send({ error: "Mauvais login" });
         }
+        else{
+
         //console.log(resultat);
   
     // Si les informations sont correctes, génération d'un jeton de connexion
@@ -63,6 +69,8 @@ app.post('/login', async(req, res) =>{
     login.release();
     console.log(token);
     res.status(200).send({ token })
+}
+
 })
 
 //liste les produits
