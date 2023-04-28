@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 require('dotenv').config();
 
+
 const pool = mariadb.createPool({
     host: process.env.DB_HOST, 
     user: process.env.DB_USER,
@@ -103,6 +104,26 @@ app.post('/login', async (req, res) => {
       return res.status(500).json({ message: 'Erreur lors de l\'inscription.' });
     }
   })
+  .post('/signup', async (req, res) => {
+    const { email, password } = req.body;
+  
+    // Hash the password using bcrypt
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+  
+    try {
+      const connection = await pool.getConnection();
+      await connection.execute(
+        'INSERT INTO users (email, password) VALUES (?, ?)',
+        [email, hashedPassword]
+      );
+      connection.release();
+      res.json({ success: true, message: 'User created successfully.' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ success: false, message: 'Error creating user.' });
+    }
+  });
 
 //liste les produits
 app.get('/produits', async(req, res)=>{
